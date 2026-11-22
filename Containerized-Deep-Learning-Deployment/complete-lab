@@ -1,0 +1,134 @@
+Lab 3: Containerized Deep Learning Deployment
+Objective
+Package a deep learning model inside a Docker container and deploy it locally on Kubernetes to simulate scalable AI application deployment — all without using cloud resources.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following tools are installed:
+
+Docker: sudo apt install docker.io -y
+
+Kubernetes (via Minikube or MicroK8s)
+
+For Minikube:
+
+sudo apt install conntrack -y
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+minikube start --driver=docker
+For MicroK8s:
+
+sudo snap install microk8s --classic
+sudo microk8s status --wait-ready
+Steps
+Step 1: Create a Simple Deep Learning API
+Create a project folder:
+
+mkdir -p ~/dl-k8s-lab/model-api
+cd ~/dl-k8s-lab/model-api
+Create a basic Flask API (app.py):
+
+from flask import Flask, request, jsonify
+import joblib
+
+app = Flask(__name__)
+model = joblib.load("iris_model.pkl")
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    prediction = model.predict([data["features"]])
+    return jsonify({"prediction": int(prediction[0])})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+Copy your trained model (iris_model.pkl) from Lab 2 into this folder.
+
+Create a requirements.txt:
+
+flask
+scikit-learn
+joblib
+Step 2: Create a Dockerfile
+Create a Dockerfile:
+
+FROM python:3.9-slim
+
+WORKDIR /app
+COPY . /app
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 5000
+CMD ["python", "app.py"]
+Build the Docker image:
+
+docker build -t iris-model-api .
+Run the container:
+
+docker run -p 5000:5000 iris-model-api
+Test it locally:
+
+curl -X POST http://localhost:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
+Step 3: Deploy the Container on Kubernetes (Minikube or MicroK8s)
+Create a deployment file deployment.yaml:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iris-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iris-model
+  template:
+    metadata:
+      labels:
+        app: iris-model
+    spec:
+      containers:
+      - name: iris-model
+        image: iris-model-api
+        ports:
+        - containerPort: 5000
+Create a service file service.yaml:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: iris-service
+spec:
+  selector:
+    app: iris-model
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: NodePort
+Apply the Kubernetes configuration:
+
+For Minikube:
+
+minikube start
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+minikube service iris-service
+For MicroK8s:
+
+microk8s kubectl apply -f deployment.yaml
+microk8s kubectl apply -f service.yaml
+microk8s kubectl get services
+Conclusion
+In this lab, you:
+
+Packaged a deep learning model inside a Docker container
+
+Exposed the model via a Flask API
+
+Deployed the container on a local Kubernetes cluster (Minikube or MicroK8s)
+
+This local simulation mirrors real-world cloud-based model deployments and prepares you to scale ML applications reliably in production environments — without needing cloud access.
