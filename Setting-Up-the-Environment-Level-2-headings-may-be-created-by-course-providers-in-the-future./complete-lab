@@ -1,0 +1,61 @@
+Lab 1: Setting Up the Environment
+Objective
+Install and configure essential open-source deep learning frameworks, developer tools, and containerization platforms locally to prepare your machine for hands-on labs.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Make sure your system is updated:
+
+sudo apt update && sudo apt upgrade -y
+Steps
+Step 1: Set Up a Python Virtual Environment
+Install python3-venv if not already available:
+
+sudo apt install python3-venv -y
+Create a virtual environment:
+
+python3 -m venv dl-env
+Activate the environment:
+
+source dl-env/bin/activate
+Step 2: Install Deep Learning Libraries
+With your virtual environment activated:
+
+Upgrade pip:
+
+pip install --upgrade pip
+Install TensorFlow, Keras, and PyTorch:
+
+pip install tensorflow keras torch torchvision
+Install Jupyter Notebook:
+
+pip install notebook
+Launch Jupyter Notebook to verify:
+
+jupyter notebook
+Press Ctrl+C to stop the notebook server after confirming it starts.
+
+Step 3: Install Docker and Run a Container
+Install Docker:
+
+sudo apt install docker.io -y
+Start and enable the Docker service:
+
+sudo systemctl start docker
+sudo systemctl enable docker
+Run a simple container to verify:
+
+sudo docker run hello-world
+This confirms that Docker is working correctly.
+
+Conclusion
+In this lab, you successfully:
+
+Set up a Python virtual environment for isolated development
+
+Installed TensorFlow, Keras, PyTorch, and Jupyter Notebook for deep learning work
+
+Installed Docker and verified it by running a container
+
+You now have a fully functional local development environment ready for AI, ML, and DevOps experiments — all configured on your Al Nafi Ubuntu machine without needing cloud access.
