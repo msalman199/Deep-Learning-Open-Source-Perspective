@@ -1,0 +1,86 @@
+Lab 2: Automated Deep Learning Model Training with CI/CD
+Objective
+Set up a local version control system using Git and integrate Jenkins for continuous integration and deployment (CI/CD), automating the training of a deep learning model on your Ubuntu machine.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following tools are installed:
+
+Git: sudo apt install git -y
+
+Python3 & pip (should already be installed)
+
+Jenkins
+
+Java (for Jenkins): sudo apt install default-jre -y
+
+Steps
+Step 1: Set Up a Git Repository
+Create a directory for your model project:
+
+mkdir -p ~/dl-cicd-lab/model-training
+cd ~/dl-cicd-lab/model-training
+Initialize a Git repository:
+
+git init
+Add a simple training script (train.py):
+
+cat > train.py <<EOF
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+import joblib
+
+iris = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(iris.data, iris.target, test_size=0.2)
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+print("Model trained. Accuracy:", model.score(X_test, y_test))
+joblib.dump(model, "iris_model.pkl")
+EOF
+Add and commit your files:
+
+git add .
+git commit -m "Initial commit with training script"
+Step 2: Install and Start Jenkins
+Install Jenkins:
+
+sudo apt install jenkins -y
+Start and enable Jenkins:
+
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+Get the initial admin password:
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+Open Jenkins in your browser:
+http://localhost:8080
+Log in and complete the setup (install suggested plugins).
+
+Step 3: Configure Jenkins Job for Model Training
+In Jenkins, create a new Freestyle Project named Model_Training_Pipeline.
+
+Under Source Code Management, choose Git and enter your local repo path (e.g., /home/ubuntu/dl-cicd-lab/model-training).
+
+Under Build, add a Build Step:
+
+Choose Execute shell
+
+Add the command to run the training script:
+
+python3 train.py
+Save and run the job.
+
+Conclusion
+In this lab, you:
+
+Created a Git repository to manage deep learning code
+
+Installed and configured Jenkins for automation
+
+Set up a CI/CD pipeline to automatically train a model upon each commit or trigger
+
+This simulates how CI/CD improves reproducibility, automation, and reliability in deep learning workflows — all on your local machine without any cloud dependency.
