@@ -1,0 +1,102 @@
+Lab 4: Cloud-based Model Training with GPU Acceleration
+Objective
+Understand how to prepare for cloud-based model training on GPU-enabled instances and simulate the key steps locally. You'll practice setting up a training pipeline on your Ubuntu machine and learn how to migrate it to a GPU cloud instance when access becomes available.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following tools are installed:
+
+Python 3.8+
+
+pip
+
+tensorflow or torch (CPU version)
+
+GPU simulator or mock flag (for emulation only)
+
+Cloud access is not available, so training will run on CPU with simulated GPU logic.
+
+Steps
+Step 1: Prepare a Deep Learning Training Script
+Create a directory:
+
+mkdir -p ~/dl-gpu-lab
+cd ~/dl-gpu-lab
+Create gpu_train.py:
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, transforms
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Training on:", device)
+
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('.', train=True, download=True,
+                   transform=transforms.ToTensor()),
+    batch_size=64, shuffle=True)
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.fc = nn.Linear(28 * 28, 10)
+
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)
+        return self.fc(x)
+
+model = Net().to(device)
+optimizer = optim.Adam(model.parameters())
+
+for epoch in range(1, 3):
+    model.train()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = nn.CrossEntropyLoss()(output, target)
+        loss.backward()
+        optimizer.step()
+    print(f"Epoch {epoch} complete.")
+
+print("Training complete.")
+Install dependencies:
+
+pip install torch torchvision
+Run the training script:
+
+python3 gpu_train.py
+Output will show "Training on: cpu" unless GPU is available.
+
+Step 2: Prepare for Cloud Execution (Simulated)
+Even without cloud access, you can prepare a script to launch a GPU cloud instance in future:
+
+AWS AMI Recommendation: Deep Learning AMI (Ubuntu 20.04)
+
+GCP Recommendation: Deep Learning VM with CUDA support
+
+Instance Types:
+
+AWS: p2.xlarge, g4dn.xlarge
+
+GCP: n1-standard-4 with NVIDIA Tesla T4
+
+Create a simulated launch script launch_gpu_cloud.sh (mock):
+
+#!/bin/bash
+echo "Launching GPU instance..."
+echo "Setting up environment with CUDA, cuDNN, and PyTorch"
+echo "Transferring training script to cloud instance"
+echo "Running training on GPU..."
+Conclusion
+In this lab, you:
+
+Prepared and ran a GPU-compatible training script locally using PyTorch
+
+Simulated GPU training behavior with torch.device("cuda" if ...) logic
+
+Created a mock plan to deploy and train on real GPU instances (when access becomes available)
+
+This lab bridges your local training setup with real-world cloud deployment, giving you hands-on readiness for GPU-accelerated training in cloud environments.
