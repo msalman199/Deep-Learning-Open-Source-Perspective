@@ -1,0 +1,111 @@
+Lab 9: Resilient Deep Learning Architectures with Failover Strategies
+Objective
+Simulate a resilient deep learning deployment by running model replicas, implementing health checks, and automatically rerouting traffic if a model instance fails — all locally without needing the cloud.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following are installed:
+
+Python 3.8+
+
+Flask (pip install flask)
+
+requests Python package (pip install requests)
+
+Steps
+Step 1: Launch Replica Model Instances
+Create two model replicas:
+Replica 1 (port 5001)
+mkdir -p ~/dl-failover-lab/replica1
+cd ~/dl-failover-lab/replica1
+cat > app.py <<EOF
+from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/predict', methods=['GET'])
+def predict():
+    return jsonify({"model": "replica1", "prediction": "class-A"})
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
+
+if __name__ == '__main__':
+    app.run(port=5001)
+EOF
+Replica 2 (port 5002)
+mkdir -p ~/dl-failover-lab/replica2
+cd ~/dl-failover-lab/replica2
+cat > app.py <<EOF
+from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/predict', methods=['GET'])
+def predict():
+    return jsonify({"model": "replica2", "prediction": "class-B"})
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
+
+if __name__ == '__main__':
+    app.run(port=5002)
+EOF
+Run both replicas in separate terminals:
+# Terminal 1
+cd ~/dl-failover-lab/replica1
+python3 app.py
+
+# Terminal 2
+cd ~/dl-failover-lab/replica2
+python3 app.py
+Step 2: Implement a Health Check and Failover Script
+Create a failover load balancer script:
+cd ~/dl-failover-lab
+cat > failover_lb.py <<EOF
+import time
+import requests
+
+replicas = [
+    {"name": "replica1", "url": "http://localhost:5001"},
+    {"name": "replica2", "url": "http://localhost:5002"}
+]
+
+def check_health(url):
+    try:
+        response = requests.get(url + "/health", timeout=2)
+        return response.status_code == 200 and response.json().get("status") == "healthy"
+    except:
+        return False
+
+def route_request():
+    for replica in replicas:
+        if check_health(replica["url"]):
+            print(f"[ACTIVE] Routing to {replica['name']}")
+            try:
+                response = requests.get(replica["url"] + "/predict")
+                print("Response:", response.json())
+            except Exception as e:
+                print("Error during request:", str(e))
+            return
+    print("[ERROR] All replicas are unavailable!")
+
+if __name__ == "__main__":
+    while True:
+        route_request()
+        time.sleep(5)
+EOF
+Run the failover load balancer:
+python3 failover_lb.py
+Kill one replica (e.g., replica1) and see the traffic shift to the healthy one (replica2).
+Conclusion
+In this lab, you:
+
+Deployed two replicas of a deep learning model
+
+Implemented /health endpoints for real-time availability checks
+
+Created a local failover system to monitor and route requests to healthy replicas
+
+This offline simulation mimics resilient cloud architecture practices — ensuring high availability and self-healing deployments for your deep learning applications using only your Ubuntu machine.
