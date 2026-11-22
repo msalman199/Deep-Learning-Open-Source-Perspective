@@ -1,0 +1,104 @@
+Lab 6: Continuous Monitoring and Logging with ELK Stack
+Objective
+Set up the ELK (Elasticsearch, Logstash, Kibana) stack locally and simulate sending logs from a deep learning model to visualize them in Kibana. This enables real-time monitoring of model performance and behavior — without using the cloud.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following tools are installed:
+
+Java (required by Elasticsearch & Logstash)
+
+ELK Stack (Elasticsearch, Logstash, Kibana)
+
+Install Java:
+sudo apt update
+sudo apt install default-jre -y
+Download and Install ELK Stack:
+You can download .deb packages from https://www.elastic.co/downloads and install with sudo dpkg -i <package>.deb. Below is a local setup method using APT:
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+sudo apt update
+sudo apt install elasticsearch kibana logstash -y
+Steps
+Step 1: Start ELK Services
+Start services in separate terminals or as background processes:
+
+sudo systemctl start elasticsearch
+sudo systemctl enable elasticsearch
+
+sudo systemctl start kibana
+sudo systemctl enable kibana
+
+sudo systemctl start logstash
+sudo systemctl enable logstash
+Visit Kibana in your browser:
+http://localhost:5601
+
+Step 2: Simulate Model Log Generation
+Create a folder for simulated logs:
+
+mkdir -p ~/elk-lab/logs
+cd ~/elk-lab/logs
+Create a mock log file:
+
+cat > model_log.json <<EOF
+{"timestamp": "2025-07-09T12:00:00Z", "model": "iris", "accuracy": 0.95, "latency_ms": 123}
+{"timestamp": "2025-07-09T12:05:00Z", "model": "iris", "accuracy": 0.94, "latency_ms": 118}
+{"timestamp": "2025-07-09T12:10:00Z", "model": "iris", "accuracy": 0.96, "latency_ms": 110}
+EOF
+Continuously append to this log:
+
+watch -n 10 "echo '{\"timestamp\": \"$(date -Iseconds)\", \"model\": \"iris\", \"accuracy\": 0.9, \"latency_ms\": $((100 + RANDOM % 30))}' >> model_log.json"
+Step 3: Configure Logstash to Ingest Logs
+Create Logstash config:
+
+sudo nano /etc/logstash/conf.d/model-log.conf
+Paste this config:
+
+input {
+  file {
+    path => "/home/ubuntu/elk-lab/logs/model_log.json"
+    start_position => "beginning"
+    sincedb_path => "/dev/null"
+    codec => "json"
+  }
+}
+
+filter {
+  date {
+    match => ["timestamp", "ISO8601"]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "model-logs"
+  }
+  stdout { codec => rubydebug }
+}
+Restart Logstash:
+
+sudo systemctl restart logstash
+Step 4: Visualize in Kibana
+Open Kibana at: http://localhost:5601
+
+Go to "Discover" → Create Index Pattern → Enter model-logs
+
+Choose timestamp as the time field
+
+Start exploring logs and create visualizations in "Visualize" → e.g., line chart of accuracy over time
+
+Conclusion
+In this lab, you:
+
+Installed and configured the ELK stack locally
+
+Simulated real-time logging from a deep learning model
+
+Used Kibana to visualize model performance metrics like accuracy and latency
+
+This gives you practical insight into continuous monitoring and observability of AI systems — completely offline on your Al Nafi-provided Ubuntu machine.
