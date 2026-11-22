@@ -1,0 +1,83 @@
+Lab 5: Deep Learning Model Security in the Cloud
+Objective
+Simulate secure cloud model storage by mimicking cloud bucket behavior locally, implementing encryption, and practicing access control strategies — all without real cloud access.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following are installed:
+
+gpg for file encryption
+
+openssl (already preinstalled on most Ubuntu systems)
+
+Basic knowledge of directory and file permissions
+
+You will simulate S3/GCP Storage using local folders and encrypted files.
+
+Steps
+Step 1: Simulate a Secure Cloud Storage Bucket
+Create a local directory to simulate an S3 or GCP bucket:
+
+mkdir -p ~/secure-cloud-storage/model-bucket
+cd ~/secure-cloud-storage/model-bucket
+Copy a sample model file (or create a mock one):
+
+echo "This is a mock ML model." > model.pt
+Set strict access permissions (simulating private bucket access):
+
+chmod 600 model.pt
+Add a simple access policy (simulated) in bucket-policy.json:
+
+{
+  "Version": "2025-07-09",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "GetObject",
+      "Resource": "arn:aws:s3:::model-bucket/model.pt",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}
+Step 2: Encrypt the Model File
+Option A: Using GPG (preferred for symmetric encryption)
+Encrypt the file:
+
+gpg -c model.pt
+You’ll be prompted to enter a passphrase. This creates model.pt.gpg.
+
+Remove the original unencrypted file:
+
+shred -u model.pt
+To decrypt later:
+
+gpg model.pt.gpg
+Option B: Using OpenSSL (alternative method)
+openssl aes-256-cbc -salt -in model.pt -out model.pt.enc
+shred -u model.pt
+openssl aes-256-cbc -d -in model.pt.enc -out model.pt
+Step 3: Simulate Access Logging and Controls
+Log every "download" attempt:
+
+echo "$(date): model accessed by user" >> access.log
+View the access logs:
+
+cat access.log
+Conclusion
+In this lab, you:
+
+Simulated secure cloud storage using a local folder as a private bucket
+
+Used Linux permissions to restrict access to the model file
+
+Applied GPG/OpenSSL to encrypt and protect the file
+
+Wrote a mock access policy and audit log system
+
+These steps help you understand how to secure deep learning models in real cloud storage (like S3 or GCP Storage) using encryption, access control, and logging — without needing live cloud access.

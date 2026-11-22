@@ -1,0 +1,16 @@
+{
+  "Version": "2025-07-09",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "GetObject",
+      "Resource": "arn:aws:s3:::model-bucket/model.pt",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}
