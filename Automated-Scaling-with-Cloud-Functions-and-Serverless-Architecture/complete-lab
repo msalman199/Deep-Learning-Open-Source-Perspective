@@ -1,0 +1,85 @@
+Lab 7: Automated Scaling with Cloud Functions and Serverless Architecture
+Objective
+Simulate how AWS Lambda or GCP Cloud Functions can be used to automate the scaling of model instances. This lab uses local Python scripts to mimic serverless function triggers and decision-making logic for efficient resource management — without relying on the cloud.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following are installed:
+
+Python 3.8+
+
+A text editor (nano, vim, or code)
+
+No cloud or internet connection is required. All logic is simulated locally.
+
+Steps
+Step 1: Understand the Serverless Trigger Concept
+In the cloud, functions like AWS Lambda or GCP Cloud Functions can:
+
+Monitor metrics (e.g., request load, CPU usage)
+
+Trigger new model instances or shut them down
+
+Operate in stateless, on-demand mode
+
+We'll now simulate this behavior using Python.
+
+Step 2: Simulate a Serverless Function Locally
+Create a folder:
+
+mkdir -p ~/dl-serverless-lab
+cd ~/dl-serverless-lab
+Create a simulated scaling function scale_model.py:
+
+import json
+import random
+from datetime import datetime
+
+def lambda_handler(event, context=None):
+    current_load = event.get("request_count", 0)
+    threshold = 50
+    action = ""
+
+    if current_load > threshold:
+        action = "Scale Up"
+    elif current_load < 10:
+        action = "Scale Down"
+    else:
+        action = "No Action"
+
+    result = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "load": current_load,
+        "action": action
+    }
+    print(json.dumps(result, indent=2))
+    return result
+
+# Simulate function triggers
+if __name__ == "__main__":
+    for _ in range(5):
+        mock_event = {"request_count": random.randint(0, 100)}
+        lambda_handler(mock_event)
+Run the simulation:
+
+python3 scale_model.py
+You’ll see simulated scaling decisions based on current "load."
+
+Step 3: Extend with Model Instance Tracker (Optional)
+You can extend this simulation by tracking how many "instances" are running:
+
+Use a file instance_count.txt to store the count
+
+Modify the lambda_handler to read/update the count based on the scaling decision
+
+Conclusion
+In this lab, you:
+
+Simulated a serverless function locally that mimics AWS Lambda or GCP Cloud Functions
+
+Created autoscaling logic based on model load thresholds
+
+Ran event-based triggers to make real-time decisions about scaling up or down model instances
+
+This offline simulation prepares you to build and deploy serverless scaling logic in cloud environments while reinforcing core serverless architecture principles — all on your Al Nafi-provided Ubuntu machine.
