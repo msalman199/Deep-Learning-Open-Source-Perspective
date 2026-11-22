@@ -1,0 +1,95 @@
+Lab 8: Multi-Model Deployment and A/B Testing
+Objective
+Deploy two versions of a deep learning model locally, and simulate traffic distribution between them to conduct A/B testing — mimicking the behavior of cloud load balancers without requiring any cloud services.
+
+Prerequisites
+Start your Al Nafi-provided Ubuntu machine
+
+Ensure the following are installed:
+
+Python 3.8+
+
+Flask (pip install flask)
+
+Nginx (sudo apt install nginx)
+
+Steps
+Step 1: Prepare Two Model Variants
+Create a working directory:
+
+mkdir -p ~/dl-ab-lab/{model_v1,model_v2}
+cd ~/dl-ab-lab
+Variant A (Model V1):
+cd model_v1
+cat > app.py <<EOF
+from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    return jsonify({"model_version": "v1", "prediction": "class-A"})
+
+if __name__ == '__main__':
+    app.run(port=5001)
+EOF
+Variant B (Model V2):
+cd ../model_v2
+cat > app.py <<EOF
+from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    return jsonify({"model_version": "v2", "prediction": "class-B"})
+
+if __name__ == '__main__':
+    app.run(port=5002)
+EOF
+Install Flask in each environment (or globally in virtualenv):
+pip install flask
+Run both models in separate terminals:
+# Terminal 1
+cd ~/dl-ab-lab/model_v1
+python3 app.py
+
+# Terminal 2
+cd ~/dl-ab-lab/model_v2
+python3 app.py
+Step 2: Configure Nginx for A/B Traffic Split
+Create a custom Nginx config:
+
+sudo nano /etc/nginx/sites-available/ab_testing
+Paste the following configuration:
+
+upstream ab_test {
+    server 127.0.0.1:5001 weight=1;
+    server 127.0.0.1:5002 weight=1;
+}
+
+server {
+    listen 8080;
+
+    location /predict {
+        proxy_pass http://ab_test;
+    }
+}
+Enable the config:
+
+sudo ln -s /etc/nginx/sites-available/ab_testing /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+Test A/B traffic routing:
+
+curl -X POST http://localhost:8080/predict -H "Content-Type: application/json" -d '{}'
+Repeat the above command a few times to see responses alternating between v1 and v2.
+
+Conclusion
+In this lab, you:
+
+Deployed two separate versions of a model API using Flask
+
+Used Nginx as a local load balancer to distribute traffic (A/B testing)
+
+Verified that traffic was routed between model variants
+
+This fully offline simulation helps you understand multi-model deployment strategies and A/B testing workflows, mirroring cloud load balancing behavior on your Al Nafi-provided Ubuntu machine.
